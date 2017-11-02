@@ -24,4 +24,4 @@ Upload the first version which can manuly changed account, grade specific lab in
 Achieved using name to sort people and user can input name and grade to grade people in the specific course.
 
 ## Reference
-Python for web tutorial: http://cuiqingcai.com/1052.html
+Python tutorial: http://cuiqingcai.com/1052.html ; http://www.runoob.com/python/python-tutorial.html
