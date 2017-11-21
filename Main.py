@@ -18,9 +18,9 @@ import re
 # the logic for regular express is: The 5 digit number will following "id=", so 'id=(\d{5})'. And following this part will
 # be some characters but never include an url which has "://" (a simple way to search the result), so '.[^://*]'
 
-# User input
-student_name = raw_input("Please Enter Student Name:\n")
-grade = raw_input("Please Enter Grade:\n")
+# Login input
+login_name = raw_input("Please Enter login name\n")
+password = raw_input("Please Enter Password\n")
 
 # close verified certificate
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -48,7 +48,7 @@ content_type = "application/x-www-form-urlencoded"
 referer = "https://csmoodle.ucd.ie/moodle/login/index.php"
 headers = {"User-Agent":user_agent, "Content-Type":content_type, "Referer":referer}
 # value for post login form
-value = {"username":"", "password":"", "rememberusername":1}
+value = {"username":login_name, "password":password, "rememberusername":1}
 data = urllib.urlencode(value)
 url = "https://csmoodle.ucd.ie/moodle/login/index.php"
 req = urllib2.Request(url, data, headers)
@@ -60,54 +60,65 @@ response = opener.open(req)
 #print response.read()
 
 sesskey = re.findall(r'sesskey=(\w*?)\"', response.read())[0]
-print sesskey
+# print sesskey
 # save & rewrite old file
 cookie.save(ignore_discard=True, ignore_expires=True)
 
-# ask grading web page and find student id
-url = "https://csmoodle.ucd.ie/moodle/mod/assign/view.php?id=41883&action=grading"
-referer = "https://csmoodle.ucd.ie/moodle/mod/assign/view.php?id=41883"
-headers = {"User-Agent":user_agent, "Referer":referer}
-req = urllib2.Request(url, headers=headers)
-response = opener.open(req)
-#print response.read()
-student_id = re.findall(r'id=(\d{5})(.[^://]*)'+student_name, response.read())[0][0]
-print student_id
-#print response.read()
+# ask / to find courses by courses ID
 
-# json header
-gradeUrl = "https://csmoodle.ucd.ie/moodle/lib/ajax/service.php?sesskey="+sesskey+"&info=mod_assign_submit_grading_form"
-user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:56.0) Gecko/20100101 Firefox/56.0"
-content_type = "application/json"
-accept_encoding = "gzip,deflate,br"
-host = "csmoodle.ucd.ie"
-referer = "https://csmoodle.ucd.ie/moodle/mod/assign/view.php?id=41883&rownum=0&action=grader&userid=12840"
-x_requested_with = "XMLHttpRequest"
-headers = {"Host":host, "User-Agent":user_agent, "Accept-Encoding":accept_encoding, "Content-Type":content_type, "Referer":referer, "X-Requested-With": x_requested_with}
-# json value
-value = [{
-    "index":0,
-    "methodname":"mod_assign_submit_grading_form",
-    "args":{
-        "assignmentid":"4194",
-        "userid":12840,
-        "jsonformdata":"\"id=41883"
-                       "&rownum=0"
-                       "&useridlistid="
-                       "&attemptnumber=-1"
-                       "&ajax=0"
-                       "&userid="+student_id+""
-                       "&sendstudentnotifications=false"
-                       "&action=submitgrade"
-                       "&sesskey="+sesskey+""
-                       "&_qf__mod_assign_grade_form_12840=1"
-                       "&grade="+grade+""
-                       "&assignfeedbackcomments_editor%5Btext%5D="
-                       "&assignfeedbackcomments_editor%5Bformat%5D=1"
-                       "&addattempt=0\""}}]
-data = json.dumps(value)
-#print data
-gradereq = urllib2.Request(gradeUrl, data, headers)
-result = opener.open(gradereq)
+# ask view.php to get inside to courses and find subject id
+
+# ask grading web page and find student id
+student_name = raw_input("Please Enter Student Name:\n")
+grade = raw_input("Please Enter Grade:\n")
+while(student_name!="Exit"):
+    url = "https://csmoodle.ucd.ie/moodle/mod/assign/view.php?id=41885&action=grading"
+    referer = "https://csmoodle.ucd.ie/moodle/mod/assign/view.php?id=41885"
+    headers = {"User-Agent":user_agent, "Referer":referer}
+    req = urllib2.Request(url, headers=headers)
+    response = opener.open(req)
+    # print response.read()
+    student_id = re.findall(r'id=(\d{5})(.[^://]*)'+student_name, response.read())[0][0]
+    # print student_id
+    # print response.read()
+
+    # find assignmentid from user-info data region.
+
+    # json header
+    gradeUrl = "https://csmoodle.ucd.ie/moodle/lib/ajax/service.php?sesskey="+sesskey+"&info=mod_assign_submit_grading_form"
+    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:56.0) Gecko/20100101 Firefox/56.0"
+    content_type = "application/json"
+    accept_encoding = "gzip,deflate,br"
+    host = "csmoodle.ucd.ie"
+    referer = "https://csmoodle.ucd.ie/moodle/mod/assign/view.php?id=41885&rownum=0&action=grader&userid=12840"
+    x_requested_with = "XMLHttpRequest"
+    headers = {"Host":host, "User-Agent":user_agent, "Accept-Encoding":accept_encoding, "Content-Type":content_type, "Referer":referer, "X-Requested-With": x_requested_with}
+    # json value
+    value = [{
+        "index":0,
+        "methodname":"mod_assign_submit_grading_form",
+        "args":{
+            "assignmentid":"4195",
+            "userid":student_id,
+            "jsonformdata":"\"id=41885"
+                        "&rownum=0"
+                        "&useridlistid="
+                        "&attemptnumber=-1"
+                        "&ajax=0"
+                        "&userid="+student_id+""
+                        "&sendstudentnotifications=false"
+                        "&action=submitgrade"
+                        "&sesskey="+sesskey+""
+                        "&_qf__mod_assign_grade_form_"+student_id+"=1"
+                        "&grade="+grade+""
+                        "&assignfeedbackcomments_editor%5Btext%5D="
+                        "&assignfeedbackcomments_editor%5Bformat%5D=1"
+                        "&addattempt=0\""}}]
+    data = json.dumps(value)
+    # print data
+    gradereq = urllib2.Request(gradeUrl, data, headers)
+    result = opener.open(gradereq)
+    student_name = raw_input("Please Enter Student Name:\n")
+    grade = raw_input("Please Enter Grade:\n")
 
 print result.read()
