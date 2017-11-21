@@ -22,6 +22,8 @@ An program with GUI which can
 Upload the first version which can manuly changed account, grade specific lab in unique lecture. Cannot sort at all, need find student id and grade manuly.
 ### 2017.11.2
 Achieved using name to sort people and user can input name and grade to grade people in the specific course.
+### 2017.11.21
+Grading test on Info security, motified some bugs.
 
 ## Reference
 Python tutorial: http://cuiqingcai.com/1052.html ; http://www.runoob.com/python/python-tutorial.html
