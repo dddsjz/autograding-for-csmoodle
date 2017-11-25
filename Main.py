@@ -3,6 +3,7 @@ _author_ = 'dddsjz'
 # Reference: http://cuiqingcai.com/1052.html
 
 # coding=utf-8
+# !/usr/bin/env python
 
 import ssl
 import urllib
@@ -57,40 +58,73 @@ if enable_proxy:
 else:
     opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookie), null_proxy_handler)
 response = opener.open(req)
-#print response.read()
+rr = response.read()
+# print rr
 
-sesskey = re.findall(r'sesskey=(\w*?)\"', response.read())[0]
+sesskey = re.findall(r'sesskey=(\w*?)\"', rr)[0]
+user_id = re.findall(r'userid=\"(\d{5,})\"', rr)[0]
+print user_id
 # print sesskey
 # save & rewrite old file
 cookie.save(ignore_discard=True, ignore_expires=True)
 
 # ask / to find courses by courses ID
+course_in = raw_input("Please Enter Course ID\n")
+course_id = re.findall(r'id=(\d{3,}).*'+course_in, rr)
+print course_id[0]
 
 # ask view.php to get inside to courses and find subject id
+url = "https://csmoodle.ucd.ie/moodle/course/view.php?id="+course_id[0]
+referer = "https://csmoodle.ucd.ie/moodle/"
+headers = {"User-Agent":user_agent, "Referer":referer}
+req = urllib2.Request(url, headers=headers)
+response = opener.open(req)
+rr = response.read()
+# print response.read()
+
+# find instance name to choose the subject to grade
+subjects = re.findall(r'id=(\d{5,}).*?instancename">(.*?)<', rr)
+print subjects
+
+# find subject id
+subject_name = raw_input("Please Choose A Subject\n")
+subject_index = -1
+for i in subjects:
+    for j in i:
+        if subject_name == j:
+            subject_index = i[0]
+
+print subject_index
+
+# find assignmentid from user-info data region.
+url = "https://csmoodle.ucd.ie/moodle/mod/assign/view.php?id="+subject_index+"&rownum=0&action=grader"
+referer = "https://csmoodle.ucd.ie/moodle/mod/assign/view.php?id="+subject_index
+headers = {"User-Agent": user_agent, "Referer": referer}
+req = urllib2.Request(url, headers=headers)
+response = opener.open(req)
+assignment_id = re.findall(r'data-assignmentid=\"(\d{4,})\"',response.read())[0]
+print assignment_id
 
 # ask grading web page and find student id
 student_name = raw_input("Please Enter Student Name:\n")
 grade = raw_input("Please Enter Grade:\n")
 while(student_name!="Exit"):
-    url = "https://csmoodle.ucd.ie/moodle/mod/assign/view.php?id=41885&action=grading"
-    referer = "https://csmoodle.ucd.ie/moodle/mod/assign/view.php?id=41885"
+    url = "https://csmoodle.ucd.ie/moodle/mod/assign/view.php?id="+subject_index+"&action=grading"
+    referer = "https://csmoodle.ucd.ie/moodle/mod/assign/view.php?id="+subject_index
     headers = {"User-Agent":user_agent, "Referer":referer}
     req = urllib2.Request(url, headers=headers)
     response = opener.open(req)
     # print response.read()
     student_id = re.findall(r'id=(\d{5})(.[^://]*)'+student_name, response.read())[0][0]
-    # print student_id
+    print student_id
     # print response.read()
-
-    # find assignmentid from user-info data region.
 
     # json header
     gradeUrl = "https://csmoodle.ucd.ie/moodle/lib/ajax/service.php?sesskey="+sesskey+"&info=mod_assign_submit_grading_form"
-    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:56.0) Gecko/20100101 Firefox/56.0"
     content_type = "application/json"
     accept_encoding = "gzip,deflate,br"
     host = "csmoodle.ucd.ie"
-    referer = "https://csmoodle.ucd.ie/moodle/mod/assign/view.php?id=41885&rownum=0&action=grader&userid=12840"
+    referer = "https://csmoodle.ucd.ie/moodle/mod/assign/view.php?id="+subject_index+"&rownum=0&action=grader&userid="+user_id
     x_requested_with = "XMLHttpRequest"
     headers = {"Host":host, "User-Agent":user_agent, "Accept-Encoding":accept_encoding, "Content-Type":content_type, "Referer":referer, "X-Requested-With": x_requested_with}
     # json value
@@ -98,9 +132,9 @@ while(student_name!="Exit"):
         "index":0,
         "methodname":"mod_assign_submit_grading_form",
         "args":{
-            "assignmentid":"4195",
+            "assignmentid":assignment_id,
             "userid":student_id,
-            "jsonformdata":"\"id=41885"
+            "jsonformdata":"\"id="+subject_index+""
                         "&rownum=0"
                         "&useridlistid="
                         "&attemptnumber=-1"
