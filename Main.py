@@ -10,6 +10,7 @@ import cookielib
 import json
 import re
 from Tkinter import *
+import os
 
 # Reference: http://cuiqingcai.com/1052.html
 
@@ -139,17 +140,40 @@ def grade_student(student_name, grade):
         headers = {"User-Agent":user_agent, "Referer":referer}
         req = urllib2.Request(url, headers=headers)
         response = opener.open(req)
+        rr = response.read()
         # print response.read()
-        student_id = re.findall(r'id=(\d{5})(.[^://]*)'+student_name, response.read())[0][0]
+        student_id = re.findall(r'id=(\d{5})(.[^://]*)'+student_name, rr)[0][0]
+        temp = re.findall(r'user'+student_id+'.*?([\s\S]*?)pluginfile.php(.*?)c9',rr)
+        #print temp
+        #print "temp 0 0 : "+temp[0][0] + "\n"
+        #print "temp 0 1 : "+temp[0][1] + "\n"
+        # print temp[1]
+        combine = temp[0][0] + 'pluginfile.php' + temp[0][1]
+        check = re.findall('cell c8[\s\S]*?</tr>', combine)
+        # print check
+        # print combine
         print student_id
         # print response.read()
+        if check.__len__() == 0:
+            download_url = re.findall(r'[a-zA-z]+://[^\s]*', re.findall(r'<a target.*?="(.*?)">', combine)[0])
+            # print download_url
+            #local.replace('\\','\/')
+
+            #local = r'C:\temp'+'\\'+student_name+r'\1.zip'
+            #print local
+            # local = re.sub(r'\\', '/', local)
+            # print local
+            local = '''D:\temp\1'''
+            urllib.urlretrieve(download_url[0], local)
+        else:
+            print("No any file to download")
 
         # json header
-        gradeUrl = "https://csmoodle.ucd.ie/moodle/lib/ajax/service.php?sesskey="+sesskey+"&info=mod_assign_submit_grading_form/"
+        # gradeUrl = "https://csmoodle.ucd.ie/moodle/lib/ajax/service.php?sesskey="+sesskey+"&info=mod_assign_submit_grading_form/"
         content_type = "application/json"
         accept_encoding = "gzip,deflate,br"
         host = "csmoodle.ucd.ie"
-        referer = "https://csmoodle.ucd.ie/moodle/mod/assign/view.php?id="+subject_index+"&rownum=0&action=grader&userid="+user_id
+        # referer = "https://csmoodle.ucd.ie/moodle/mod/assign/view.php?id="+subject_index+"&rownum=0&action=grader&userid="+user_id
         x_requested_with = "XMLHttpRequest"
         headers = {"Host":host, "User-Agent":user_agent, "Accept-Encoding":accept_encoding, "Content-Type":content_type, "Referer":referer, "X-Requested-With": x_requested_with}
         # json value
@@ -173,14 +197,15 @@ def grade_student(student_name, grade):
                             "&assignfeedbackcomments_editor%5Btext%5D="
                             "&assignfeedbackcomments_editor%5Bformat%5D=1"
                             "&addattempt=0\""}}]
-        data = json.dumps(value)
+        # data = json.dumps(value)
         # print data
-        gradereq = urllib2.Request(gradeUrl, data, headers)
-        result = opener.open(gradereq)
+        # gradereq = urllib2.Request(gradeUrl, data, headers)
+        # result = opener.open(gradereq)
+        # print result.read()
         student_name = raw_input("Please Enter Student Name:\n")
         grade = raw_input("Please Enter Grade:\n")
 
-    print result.read()
+
     return 0
 
 
